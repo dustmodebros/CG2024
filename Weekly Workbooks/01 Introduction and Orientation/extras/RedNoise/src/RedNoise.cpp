@@ -3,6 +3,7 @@
 #include <DrawingWindow.h>
 #include <Utils.h>
 #include <fstream>
+#include <ModelTriangle.h>
 #include <random>
 #include <TextureMap.h>
 #include <valarray>
@@ -198,14 +199,14 @@ std::vector<glm::vec2> drawTexturedLine(int x1, int y1, int x2, int y2, int tx1,
 		textureColours.push_back(texture[tp.y][tp.x].colour);
 	}
 	for (int i=0; i<imagePoints.size(); i++) {
-		std::cout << textureColours[i] << std::endl;
+		// std::cout << textureColours[i] << std::endl;
 		window.setPixelColour(static_cast<int>(imagePoints[i].x), static_cast<int>(imagePoints[i].y),textureColours[i].asARGB());
 	}
 	return texturePoints;
 }
 
 
-void drawFlatTexturedTriangle(CanvasTriangle imageTriangle, std::vector<std::vector<TexturePoint>> texture, CanvasTriangle textureTriangle, const Colour &c, DrawingWindow &window) {
+void drawFlatTexturedTriangle(CanvasTriangle imageTriangle, std::vector<std::vector<TexturePoint>> texture, CanvasTriangle textureTriangle, DrawingWindow &window) {
 	glm::vec2 iShared, ip1, ip2;
 	glm::vec2 tShared, tp1, tp2;
 	if (imageTriangle.v0().y == imageTriangle.v1().y) {
@@ -225,21 +226,25 @@ void drawFlatTexturedTriangle(CanvasTriangle imageTriangle, std::vector<std::vec
 	} else {
 		iShared = glm::vec2(static_cast<int>(imageTriangle.v0().x), static_cast<int>(imageTriangle.v0().y));
 		tShared = glm::vec2(static_cast<int>(textureTriangle.v0().x), static_cast<int>(textureTriangle.v0().y));
-		tp1 = glm::vec2(static_cast<int>(textureTriangle.v0().x), static_cast<int>(textureTriangle.v0().y));
+		tp1 = glm::vec2(static_cast<int>(textureTriangle.v1().x), static_cast<int>(textureTriangle.v0().y));
 		ip1 = glm::vec2(static_cast<int>(imageTriangle.v1().x), static_cast<int>(imageTriangle.v1().y));
 		tp2 = glm::vec2(static_cast<int>(textureTriangle.v2().x), static_cast<int>(textureTriangle.v2().y));
 		ip2 = glm::vec2(static_cast<int>(imageTriangle.v2().x), static_cast<int>(imageTriangle.v2().y));
 	}
-	//I GOT UP TO HERE
-	std::vector<glm::vec2> fromPoints = interpv2(iShared, ip1, std::abs(iShared.y-ip1.y)+1);
-	std::vector<glm::vec2> toPoints = interpv2(iShared, ip2, std::abs(iShared.y-ip2.y)+1);
-	for (int i=0; i< fromPoints.size(); i++) {
-		if (static_cast<int>(fromPoints[i].x) != static_cast<int>(toPoints[i].x) || static_cast<int>(fromPoints[i].y) != static_cast<int>(toPoints[i].y)) {
-			drawLine(fromPoints[i].x,fromPoints[i].y, toPoints[i].x, toPoints[i].y ,c,window);
+	std::vector<glm::vec2> imageFromPoints = interpv2(iShared, ip1, std::abs(iShared.y-ip1.y)+1);
+	std::vector<glm::vec2> imageToPoints = interpv2(iShared, ip2, std::abs(iShared.y-ip2.y)+1);
+	std::vector<glm::vec2> textureFromPoints = interpv2(tShared, tp1, std::abs(iShared.y-ip2.y)+1);
+	std::vector<glm::vec2> textureToPoints = interpv2(tShared, tp2, std::abs(iShared.y-ip2.y)+1);
+
+	std::vector<Colour> textureColours;
+	for (int i=0; i< imageFromPoints.size(); i++) {
+		if (static_cast<int>(imageFromPoints[i].x) != static_cast<int>(imageToPoints[i].x) || static_cast<int>(imageFromPoints[i].y) != static_cast<int>(imageToPoints[i].y)) {
+			//If there is space to interpolate between the from and to:
+			drawTexturedLine(imageFromPoints[i].x,imageFromPoints[i].y, imageToPoints[i].x, imageToPoints[i].y, textureFromPoints[i].x, textureFromPoints[i].y, textureToPoints[i].x, textureToPoints[i].y, texture, window);
 		}
 	}
-	drawTexturedLine(iShared.x, iShared.y, ip1.x, ip1.y, Colour(255,255,255), window);
-	drawTexturedLine(iShared.x, iShared.y, ip2.x, ip2.y, Colour(255,255,255), window);
+	drawLine(iShared.x, iShared.y, ip1.x, ip1.y, Colour(255,255,255), window);
+	drawLine(iShared.x, iShared.y, ip2.x, ip2.y, Colour(255,255,255), window);
 }
 
 std::vector<std::vector<TexturePoint>> loadTexture(TextureMap texture) {
@@ -260,58 +265,91 @@ std::vector<std::vector<TexturePoint>> loadTexture(TextureMap texture) {
 	return outVector;
 }
 
-void drawTexturedTriangle(CanvasTriangle imageTriangle, TextureMap texture, CanvasPoint tp1, CanvasPoint tp2, CanvasPoint tp3, DrawingWindow &window) {
+void drawTexturedTriangle(CanvasTriangle imageTriangle, std::vector<std::vector<TexturePoint>> texture, CanvasTriangle textureTriangle, DrawingWindow &window) {
 	drawStrokedTriangle(imageTriangle, Colour(255,255,255), window);
-	CanvasPoint point1 = imageTriangle.v0();
-	CanvasPoint point2 = imageTriangle.v1();
-	CanvasPoint point3 = imageTriangle.v2();
-	CanvasPoint point4;
+	CanvasPoint ipoint1 = imageTriangle.v0();
+	CanvasPoint tpoint1 = textureTriangle.v0();
+	CanvasPoint ipoint2 = imageTriangle.v1();
+	CanvasPoint tpoint2 = textureTriangle.v1();
+	CanvasPoint ipoint3 = imageTriangle.v2();
+	CanvasPoint tpoint3 = textureTriangle.v2();
+	CanvasPoint ipoint4;
+	CanvasPoint tpoint4;
 	Colour c = {255,255,255};
-	if ((point1.y < point3.y && point1.y > point2.y) || (point1.y > point3.y && point1.y < point2.y)) {
+	if ((ipoint1.y < ipoint3.y && ipoint1.y > ipoint2.y) || (ipoint1.y > ipoint3.y && ipoint1.y < ipoint2.y)) {
 		// point1 is the middle, so interp 2 and 3 and find x which is == y
-		auto otherLine = interp(glm::vec2(static_cast<int>(point2.x), static_cast<int>(point2.y)), glm::vec2(static_cast<int>(point3.x), static_cast<int>(point3.y)), std::max(std::abs(point2.x - point3.x)+1, std::abs(point2.y-point3.y))+1);
-		for (auto point: otherLine) {
-			if (point1.y == (int) point.y) {
-				point4 = CanvasPoint((int) point.x, (int) point.y);
+		std::cout << "boop" << std::endl;
+		auto iotherLine = interp(glm::vec2(static_cast<int>(ipoint2.x), static_cast<int>(ipoint2.y)), glm::vec2(static_cast<int>(ipoint3.x), static_cast<int>(ipoint3.y)), std::max(std::abs(ipoint2.x - ipoint3.x)+1, std::abs(ipoint2.y-ipoint3.y))+1);
+		auto totherLine = interp(glm::vec2(static_cast<int>(tpoint2.x), static_cast<int>(tpoint2.y)), glm::vec2(static_cast<int>(tpoint3.x), static_cast<int>(tpoint3.y)), std::max(std::abs(ipoint2.x - ipoint3.x)+1, std::abs(ipoint2.y-ipoint3.y))+1);
+		for (auto ipoint: iotherLine) {
+			if (ipoint1.y == (int) ipoint.y) {
+				ipoint4 = CanvasPoint((int) ipoint.x, (int) ipoint.y);
 			}
 		}
-		CanvasTriangle triangle1 = CanvasTriangle(point2, point1, point4);
-		CanvasTriangle triangle2 = CanvasTriangle(point3, point1, point4);
-		drawFlatTriangle(triangle1, c, window);
-		drawFlatTriangle(triangle2, c, window);
-		drawPartialTriangle(point2, point1, point4, Colour(255,255,255), window);
-		drawPartialTriangle(point3, point1, point4, Colour(255,255,255), window);
-	} else if ((point2.y < point1.y && point2.y > point3.y) || (point2.y > point1.y && point2.y < point3.y)) {
+		// find proportion of way down the triangle
+		// top-middle/top-bottom is the proportion
+		// so the point4 will be proportion along totherLine
+		float proportion = std::abs(ipoint2.y-ipoint4.y)/std::abs(ipoint2.y-ipoint3.y);
+		auto tIndex = proportion * (std::max(std::abs(ipoint2.x - ipoint3.x)+1, std::abs(ipoint2.y-ipoint3.y))+1);
+		tpoint4 = CanvasPoint(totherLine[static_cast<int>(tIndex)].x, totherLine[static_cast<int>(tIndex)].y);
+		//make an interp list of all the points along the otherline, then multiply the numberOfValues by (top.y-middle.y)/(top.y-bottom.y) to get the position in outlist that you want
+		CanvasTriangle itriangle1 = CanvasTriangle(ipoint2, ipoint1, ipoint4);
+		CanvasTriangle itriangle2 = CanvasTriangle(ipoint3, ipoint1, ipoint4);
+		CanvasTriangle ttriangle1 = CanvasTriangle(tpoint2, tpoint1, tpoint4);
+		CanvasTriangle ttriangle2 = CanvasTriangle(tpoint3, tpoint1, tpoint4);
+		drawFlatTexturedTriangle(itriangle1, texture, ttriangle1, window);
+		drawFlatTexturedTriangle(itriangle2, texture, ttriangle2, window);
+		drawPartialTriangle(ipoint2, ipoint1, ipoint4, Colour(255,255,255), window);
+		drawPartialTriangle(ipoint3, ipoint1, ipoint4, Colour(255,255,255), window);
+	} else if ((ipoint2.y < ipoint1.y && ipoint2.y > ipoint3.y) || (ipoint2.y > ipoint1.y && ipoint2.y < ipoint3.y)) {
 		//point2 is the middle point, so interp 1 and 3 and find x which is == y
-		auto otherLine = interp(glm::vec2(static_cast<int>(point1.x), static_cast<int>(point1.y)), glm::vec2(static_cast<int>(point3.x), static_cast<int>(point3.y)), std::max(std::abs(point1.x - point3.x)+1, std::abs(point1.y-point3.y))+1);
+		std::cout << "boopa" << std::endl;
+
+		auto otherLine = interp(glm::vec2(static_cast<int>(ipoint1.x), static_cast<int>(ipoint1.y)), glm::vec2(static_cast<int>(ipoint3.x), static_cast<int>(ipoint3.y)), std::max(std::abs(ipoint1.x - ipoint3.x)+1, std::abs(ipoint1.y-ipoint3.y))+1);
+		auto totherLine = interp(glm::vec2(static_cast<int>(tpoint1.x), static_cast<int>(tpoint1.y)), glm::vec2(static_cast<int>(tpoint3.x), static_cast<int>(tpoint3.y)), std::max(std::abs(ipoint1.x - ipoint3.x)+1, std::abs(ipoint1.y-ipoint3.y))+1);
+		//to get the samples, i need to in
 		for (auto point: otherLine) {
-			if (point2.y == (int) point.y) {
-				point4 = CanvasPoint((int) point.x, (int) point.y);
+			if (ipoint2.y == (int) point.y) {
+				ipoint4 = CanvasPoint((int) point.x, (int) point.y);
 			}
 		}
-		CanvasTriangle triangle1 = CanvasTriangle(point1, point2, point4);
-		CanvasTriangle triangle2 = CanvasTriangle(point3, point2, point4);
-		drawFlatTriangle(triangle1, c, window);
-		drawFlatTriangle(triangle2, c, window);
-		drawPartialTriangle(point1, point2, point4, Colour(255,255,255), window);
-		drawPartialTriangle(point3, point2, point4, Colour(255,255,255), window);
-	} else if ((point3.y < point1.y && point3.y > point2.y) || (point3.y > point1.y && point3.y < point2.y)) {
+		float proportion = std::abs(ipoint1.y-ipoint4.y)/std::abs(ipoint1.y-ipoint3.y);
+		auto tIndex = proportion * (std::max(std::abs(ipoint1.x - ipoint3.x)+1, std::abs(ipoint1.y-ipoint3.y))+1);
+		tpoint4 = CanvasPoint(totherLine[static_cast<int>(tIndex)].x, totherLine[static_cast<int>(tIndex)].y);
+		CanvasTriangle itriangle1 = CanvasTriangle(ipoint1, ipoint2, ipoint4);
+		CanvasTriangle itriangle2 = CanvasTriangle(ipoint3, ipoint2, ipoint4);
+		CanvasTriangle ttriangle1 = CanvasTriangle(tpoint1, tpoint2, tpoint4);
+		CanvasTriangle ttriangle2 = CanvasTriangle(tpoint3, tpoint2, tpoint4);
+		drawFlatTexturedTriangle(itriangle1, texture, ttriangle1, window);
+		drawFlatTexturedTriangle(itriangle2, texture, ttriangle2, window);
+		drawPartialTriangle(ipoint1, ipoint2, ipoint4, Colour(255,255,255), window);
+		drawPartialTriangle(ipoint3, ipoint2, ipoint4, Colour(255,255,255), window);
+	} else if ((ipoint3.y < ipoint1.y && ipoint3.y > ipoint2.y) || (ipoint3.y > ipoint1.y && ipoint3.y < ipoint2.y)) {
 		//point3 is the middle point, so interp 1 and 2 and find x which is == y
-		auto otherLine = interp(glm::vec2(static_cast<int>(point1.x), static_cast<int>(point1.y)), glm::vec2(static_cast<int>(point2.x), static_cast<int>(point2.y)), std::max(std::abs(point1.x - point2.x)+1, std::abs(point1.y-point2.y))+1);
+		std::cout << "boops" << std::endl;
+
+		auto otherLine = interp(glm::vec2(static_cast<int>(ipoint1.x), static_cast<int>(ipoint1.y)), glm::vec2(static_cast<int>(ipoint2.x), static_cast<int>(ipoint2.y)), std::max(std::abs(ipoint1.x - ipoint2.x)+1, std::abs(ipoint1.y-ipoint2.y))+1);
+		auto totherLine = interp(glm::vec2(static_cast<int>(tpoint1.x), static_cast<int>(tpoint1.y)), glm::vec2(static_cast<int>(tpoint2.x), static_cast<int>(tpoint2.y)), std::max(std::abs(ipoint1.x - ipoint2.x)+1, std::abs(ipoint1.y-ipoint2.y))+1);
 		for (auto point: otherLine) {
-			if (point3.y == (int) point.y) {
-				point4 = CanvasPoint((int) point.x, (int) point.y);
+			if (ipoint3.y == (int) point.y) {
+				ipoint4 = CanvasPoint((int) point.x, (int) point.y);
 			}
 		}
-		CanvasTriangle triangle1 = CanvasTriangle(point1, point3, point4);
-		CanvasTriangle triangle2 = CanvasTriangle(point2, point3, point4);
-		drawFlatTriangle(triangle1, c, window);
-		drawFlatTriangle(triangle2, c, window);
-		drawPartialTriangle(point1, point3, point4, Colour(255,255,255), window);
-		drawPartialTriangle(point2, point3, point4, Colour(255,255,255), window);
+		float proportion = std::abs(ipoint1.y-ipoint4.y)/std::abs(ipoint1.y-ipoint2.y);
+		auto tIndex = proportion * (std::max(std::abs(ipoint2.x - ipoint3.x)+1, std::abs(ipoint2.y-ipoint3.y))+1);
+
+		tpoint4 = CanvasPoint(totherLine[static_cast<int>(tIndex)].x, totherLine[static_cast<int>(tIndex)].y);
+		CanvasTriangle itriangle1 = CanvasTriangle(ipoint1, ipoint3, ipoint4);
+		CanvasTriangle itriangle2 = CanvasTriangle(ipoint2, ipoint3, ipoint4);
+		CanvasTriangle ttriangle1 = CanvasTriangle(tpoint1, tpoint3, tpoint4);
+		CanvasTriangle ttriangle2 = CanvasTriangle(tpoint2, tpoint3, tpoint4);
+		drawFlatTexturedTriangle(itriangle1, texture, ttriangle1, window);
+		drawFlatTexturedTriangle(itriangle2, texture, ttriangle2, window);
+		drawPartialTriangle(ipoint1, ipoint3, ipoint4, Colour(255,255,255), window);
+		drawPartialTriangle(ipoint2, ipoint3, ipoint4, Colour(255,255,255), window);
 	} else {
 		//we have a flat triangle
-		drawFlatTriangle(imageTriangle, c, window);
+		drawFlatTexturedTriangle(imageTriangle, texture, textureTriangle, window);
 		drawStrokedTriangle(imageTriangle, Colour(255,255,255), window);
 	}
 }
@@ -353,9 +391,79 @@ void handleEvent(SDL_Event event, DrawingWindow &window) {
 	}
 }
 
+std::vector<ModelTriangle> readSingleObject(std::string inString) {
+	std::string stringDelimiter = "\n";
+	std::string line = inString.substr(0, inString.find(stringDelimiter));
+	std::string vectorDelimiter = " ";
+	std::string faceDelimiter = "/";
+	std::vector<ModelTriangle> outVector;
+	std::vector<glm::vec3> vertices;
+	std::vector<glm::ivec3> faces;
+	while(inString != "end") {
+		if (line[0] == 'v') {
+			line = line.substr(2, line.size());
+			std::cout << line << std::endl;
+			auto v1 = line.substr(0, line.find(vectorDelimiter));
+			line = line.substr(line.find(vectorDelimiter) + 1, line.size());
+			auto v2 = line.substr(0, line.find(vectorDelimiter));
+			line = line.substr(line.find(vectorDelimiter) + 1, line.size());
+			auto v3 = line.substr(0, line.find(vectorDelimiter));
+			std::cout << v1 << " one  " << v2 << " two  " << v3 << " three" <<std::endl;
+			vertices.push_back(glm::vec3(std::stof(v1), std::stof(v2), std::stof(v3)));
+		} else if (line[0] == 'f') {
+			line = line.substr(2, line.size());
+			std::cout << line << std::endl;
+			auto v1 = line.substr(0, line.find(faceDelimiter));
+			line = line.substr(line.find(faceDelimiter) + 2, line.size());
+			auto v2 = line.substr(0, line.find(faceDelimiter));
+			line = line.substr(line.find(faceDelimiter) + 2, line.size());
+			auto v3 = line.substr(0, line.find(faceDelimiter));
+			std::cout << v1 << " one  "<< v2 << " two  "  << v3 << " three" << std::endl;
+			faces.push_back(glm::vec3(std::stoi(v1), std::stoi(v2), std::stoi(v3)));
+		}
+	}
+	for (auto face : faces) {
+		auto one = face.x;
+		auto two = face.y;
+		auto three = face.z;
+		outVector.push_back(ModelTriangle(vertices[one-1], vertices[two-1], vertices[three-1], Colour(255, 255, 255)));
+	}
+	return outVector;
+}
+
+// std::vector<ModelTriangle> readOBJ (char *filename) {
+void readOBJ (char *filename) {
+	std::ifstream theOBJ(filename);
+	std::string all;
+	std::string thisLine;
+
+	std::getline(theOBJ, thisLine);
+	std::getline(theOBJ, thisLine);
+	while(!theOBJ.eof()) {
+		std::getline(theOBJ, thisLine);
+		all += thisLine + "\n";
+	}
+	std::string objDelimiter = "\n\n";
+	for (int i=0; i<1; i++) {
+		std::string singleObject = all.substr(0, all.find(objDelimiter));
+		all = all.substr(all.find(objDelimiter) + 1, all.length());
+		std::cout << singleObject << std::endl;
+	}
+
+}
+
 int main(int argc, char *argv[]) {
+	// auto triangles = readOBJ("/Users/samuelstephens/Downloads/cornell-box.obj");
+	readOBJ("/Users/samuelstephens/Downloads/cornell-box.obj");
+	// for (auto each : triangles) {
+	// 	std::cout << each << std::endl;
+	// }
+
+
+
 	DrawingWindow window = DrawingWindow(WIDTH, HEIGHT, false);
 	SDL_Event event;
+	/*
 	std::vector<float> result;
 	for(size_t i=0; i<result.size(); i++) std::cout << result[i] << " ";
 	auto v1 = glm::vec2(27, 30);
@@ -364,9 +472,9 @@ int main(int argc, char *argv[]) {
 	auto res1 = interpv2(v1, v2, std::abs(v1.y-v2.y)+1);
 	auto res2 = interpv2(v2, v3, std::abs(v1.y-v2.y)+1);
 	auto res3 = interpv2(v1, v2, std::abs(v1.y-v2.y)+1);
-	for (glm::vec2 elem : res1) {
-		std::cout << glm::to_string(elem) << std::endl;
-	}
+	// for (glm::vec2 elem : res1) {
+	//	 std::cout << glm::to_string(elem) << std::endl;
+	// }
 	TextureMap texture = TextureMap("/Users/samuelstephens/Year3/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/texture.ppm");
 	auto texturePoints = loadTexture(texture);
 	// for (int y=0; y<texture.height; y++){
@@ -374,11 +482,20 @@ int main(int argc, char *argv[]) {
 	// 		window.setPixelColour(x, y, texturePoints[y][x].colour.asARGB());
 	// 	}
 	// }
-	auto texturePointsOut = drawTextureLine(0,200,200,200, 112,40,113,47,texturePoints, window);
-	for (auto each : texturePointsOut) {
-		std::cout << each.x << ", " << each.y << std::endl;
-	}
+	CanvasTriangle iTriangle =
+		{CanvasPoint(100,50),
+		CanvasPoint(200, 100),
+		CanvasPoint(100, 150)
+	};
+	CanvasTriangle tTriangle =
+	{CanvasPoint(100,50),
+	CanvasPoint(200, 100),
+	CanvasPoint(100, 150)
+	};
+	//make an interp list of all the points along the otherline, then multiply the numberOfValues by (top.y-middle.y)/(top.y-bottom.y) to get the position in outlist that you want
+	drawTexturedTriangle(iTriangle, texturePoints, tTriangle, window);
 	std::cout << std::endl;
+	*/
 	while (true) {
 		// We MUST poll for events - otherwise the window will freeze !
 		if (window.pollForInputEvents(event)) handleEvent(event, window);
