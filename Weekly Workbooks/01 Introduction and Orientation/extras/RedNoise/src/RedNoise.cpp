@@ -47,16 +47,7 @@ std::vector<glm::vec2> interpv2(glm::vec2 from, glm::vec2 to, int const numberOf
 	return outList;
 }
 
-// std::vector<int> interpv2(int from, int to, int const numberOfValues) {
-// 	std::vector<int> outList;
-// 	const int incr = (to-from) / numberOfValues-1;
-// 	outList.reserve(numberOfValues);
-// 	for (int i=0; i<numberOfValues; i++) {
-// 		outList.push_back(from + i * incr);
-// 	}
-// 	return outList;
-// }
-
+// Draws a straight interpolated line between two points with a colour to the window
 void drawLine(int x1, int y1, int x2, int y2, Colour colour, DrawingWindow &window) {
 	glm::vec2 start = glm::vec2(x1, y1);
 	glm::vec2 end = glm::vec2(x2, y2);
@@ -66,6 +57,7 @@ void drawLine(int x1, int y1, int x2, int y2, Colour colour, DrawingWindow &wind
 	}
 }
 
+// Draws a RGB gradient to the window
 void drawRainbow(DrawingWindow &window) {
 	window.clearPixels();
 	std::vector<glm::vec3> left = interp(glm::vec3(255,0,0), glm::vec3(255,255,0), window.height);
@@ -82,6 +74,7 @@ void drawRainbow(DrawingWindow &window) {
 	}
 }
 
+// Returns a random CanvasTriangle
 CanvasTriangle randomTriangle() {
 	return CanvasTriangle(
 	CanvasPoint(rand()%WIDTH, rand()%HEIGHT),
@@ -90,21 +83,24 @@ CanvasTriangle randomTriangle() {
 	);
 }
 
+// Draws a stroked triangle with colour c to the window
 void drawStrokedTriangle(CanvasTriangle &triangle, const Colour& c, DrawingWindow &window) {
-	auto p0 = glm::vec2(triangle.v0().x, triangle.v0().y);
-	auto p1 = glm::vec2(triangle.v1().x, triangle.v1().y);
-	auto p2 = glm::vec2(triangle.v2().x, triangle.v2().y);
+	const auto p0 = glm::vec2(triangle.v0().x, triangle.v0().y);
+	const auto p1 = glm::vec2(triangle.v1().x, triangle.v1().y);
+	const auto p2 = glm::vec2(triangle.v2().x, triangle.v2().y);
 	drawLine(p0.x, p0.y, p1.x, p1.y,c,window);
 	drawLine(p1.x, p1.y, p2.x, p2.y,c,window);
 	drawLine(p0.x, p0.y, p2.x, p2.y,c,window);
 }
 
+// Draws the top or bottom 2 outer stroked lines of a filled triangle half to the window
 void drawPartialTriangle(CanvasPoint shared, CanvasPoint p1, CanvasPoint p2, const Colour& c, DrawingWindow &window) {
 	drawLine(shared.x, shared.y, p1.x, p1.y,c,window);
 	drawLine(shared.x, shared.y, p2.x, p2.y,c,window);
 }
 
-std::vector<glm::vec2> drawFlatTriangle(CanvasTriangle triangle, const Colour &c, DrawingWindow &window) {
+// Draws a white stroked filled triangle with a flat top or bottom to the screen with fill colour c to the window
+void drawFlatTriangle(CanvasTriangle triangle, const Colour &c, DrawingWindow &window) {
 	glm::vec2 shared, p1, p2;
 	if (triangle.v0().y == triangle.v1().y) {
 		shared = glm::vec2(static_cast<int>(triangle.v2().x), static_cast<int>(triangle.v2().y));
@@ -121,17 +117,17 @@ std::vector<glm::vec2> drawFlatTriangle(CanvasTriangle triangle, const Colour &c
 	}
 	std::vector<glm::vec2> fromPoints = interpv2(shared, p1, std::abs(shared.y-p1.y)+1);
 	std::vector<glm::vec2> toPoints = interpv2(shared, p2, std::abs(shared.y-p2.y)+1);
-	for (int i=0; i< fromPoints.size(); i++) {
+	for (int i=0; i< static_cast<int>(fromPoints.size()); i++) {
 		if (static_cast<int>(fromPoints[i].x) != static_cast<int>(toPoints[i].x) || static_cast<int>(fromPoints[i].y) != static_cast<int>(toPoints[i].y)) {
 			drawLine(fromPoints[i].x,fromPoints[i].y, toPoints[i].x, toPoints[i].y ,c,window);
 		}
 	}
 	drawLine(shared.x, shared.y, p1.x, p1.y, Colour(255,255,255), window);
 	drawLine(shared.x, shared.y, p2.x, p2.y, Colour(255,255,255), window);
-	return fromPoints;
 }
 
-void drawFilledTriangle(CanvasTriangle triangle, Colour c, DrawingWindow &window) {
+// Draws a white stroked filled triangle to the screen with fill colour c
+void drawFilledTriangle(CanvasTriangle triangle, const Colour& c, DrawingWindow &window) {
 	CanvasPoint point1 = triangle.v0();
 	CanvasPoint point2 = triangle.v1();
 	CanvasPoint point3 = triangle.v2();
@@ -185,8 +181,8 @@ void drawFilledTriangle(CanvasTriangle triangle, Colour c, DrawingWindow &window
 	}
 }
 
-std::vector<glm::vec2> drawTexturedLine(int x1, int y1, int x2, int y2, int tx1, int ty1, int tx2, int ty2, std::vector<std::vector<TexturePoint>> texture, DrawingWindow &window) {
-	//return vector of interpolated pixel values between two points on the texture, with the numberOfValues being the same as the numberOfValues in the image
+// Draws a line with colours according to the texture
+void drawTexturedLine(int x1, int y1, int x2, int y2, int tx1, int ty1, int tx2, int ty2, std::vector<std::vector<TexturePoint>> texture, DrawingWindow &window) {
 	glm::vec2 imageStart = glm::vec2(x1, y1);
 	glm::vec2 imageEnd = glm::vec2(x2, y2);
 	glm::vec2 textureStart = glm::vec2(tx1, ty1);
@@ -198,15 +194,14 @@ std::vector<glm::vec2> drawTexturedLine(int x1, int y1, int x2, int y2, int tx1,
 	for (auto tp : texturePoints) {
 		textureColours.push_back(texture[tp.y][tp.x].colour);
 	}
-	for (int i=0; i<imagePoints.size(); i++) {
+	for (int i=0; i<static_cast<int>(imagePoints.size()); i++) {
 		// std::cout << textureColours[i] << std::endl;
 		window.setPixelColour(static_cast<int>(imagePoints[i].x), static_cast<int>(imagePoints[i].y),textureColours[i].asARGB());
 	}
-	return texturePoints;
 }
 
-
-void drawFlatTexturedTriangle(CanvasTriangle imageTriangle, std::vector<std::vector<TexturePoint>> texture, CanvasTriangle textureTriangle, DrawingWindow &window) {
+// Draws a Textured Triangle to the window
+void drawFlatTexturedTriangle(CanvasTriangle imageTriangle, const std::vector<std::vector<TexturePoint>> &texture, CanvasTriangle textureTriangle, DrawingWindow &window) {
 	glm::vec2 iShared, ip1, ip2;
 	glm::vec2 tShared, tp1, tp2;
 	if (imageTriangle.v0().y == imageTriangle.v1().y) {
@@ -237,7 +232,7 @@ void drawFlatTexturedTriangle(CanvasTriangle imageTriangle, std::vector<std::vec
 	std::vector<glm::vec2> textureToPoints = interpv2(tShared, tp2, std::abs(iShared.y-ip2.y)+1);
 
 	std::vector<Colour> textureColours;
-	for (int i=0; i< imageFromPoints.size(); i++) {
+	for (int i=0; i< static_cast<int>(imageFromPoints.size()); i++) {
 		if (static_cast<int>(imageFromPoints[i].x) != static_cast<int>(imageToPoints[i].x) || static_cast<int>(imageFromPoints[i].y) != static_cast<int>(imageToPoints[i].y)) {
 			//If there is space to interpolate between the from and to:
 			drawTexturedLine(imageFromPoints[i].x,imageFromPoints[i].y, imageToPoints[i].x, imageToPoints[i].y, textureFromPoints[i].x, textureFromPoints[i].y, textureToPoints[i].x, textureToPoints[i].y, texture, window);
@@ -247,13 +242,14 @@ void drawFlatTexturedTriangle(CanvasTriangle imageTriangle, std::vector<std::vec
 	drawLine(iShared.x, iShared.y, ip2.x, ip2.y, Colour(255,255,255), window);
 }
 
-std::vector<std::vector<TexturePoint>> loadTexture(TextureMap texture) {
+// Converts a TextureMap to a 2D vector of points with associated colours
+std::vector<std::vector<TexturePoint>> loadTexture(const TextureMap &texture) {
 	std::cout << "Loading image: " << texture.width << " by " << texture.height << std::endl;
 	std::vector<std::vector<TexturePoint>> outVector;
 	std::vector<TexturePoint> smallOutVector;
 
-	for (int y=0; y<texture.height; y++) {
-		for (int x=0; x<texture.width; x++) {
+	for (int y=0; y<static_cast<int>(texture.height); y++) {
+		for (int x=0; x<static_cast<int>(texture.width); x++) {
 			if (y==0) {
 				smallOutVector.push_back(TexturePoint(x, y, Colour((texture.pixels[y*texture.width+x]&0xFF0000)>>16, (texture.pixels[y*texture.width+x]&0xFF00)>>8, texture.pixels[y*texture.width+x]&0xFF)));
 			} else {
@@ -265,7 +261,18 @@ std::vector<std::vector<TexturePoint>> loadTexture(TextureMap texture) {
 	return outVector;
 }
 
-void drawTexturedTriangle(CanvasTriangle imageTriangle, std::vector<std::vector<TexturePoint>> texture, CanvasTriangle textureTriangle, DrawingWindow &window) {
+// Draws the texture to the window
+void drawTexture(const TextureMap &texture, DrawingWindow &window) {
+	auto texturePoints = loadTexture(texture);
+	for (int y=0; y<texture.height; y++){
+		for (int x=0; x<texture.width; x++) {
+			window.setPixelColour(x, y, texturePoints[y][x].colour.asARGB());
+		}
+	}
+}
+
+//TODO: fix this
+void drawTexturedTriangle(CanvasTriangle imageTriangle, const std::vector<std::vector<TexturePoint>>& texture, CanvasTriangle textureTriangle, DrawingWindow &window) {
 	drawStrokedTriangle(imageTriangle, Colour(255,255,255), window);
 	CanvasPoint ipoint1 = imageTriangle.v0();
 	CanvasPoint tpoint1 = textureTriangle.v0();
@@ -278,7 +285,6 @@ void drawTexturedTriangle(CanvasTriangle imageTriangle, std::vector<std::vector<
 	Colour c = {255,255,255};
 	if ((ipoint1.y < ipoint3.y && ipoint1.y > ipoint2.y) || (ipoint1.y > ipoint3.y && ipoint1.y < ipoint2.y)) {
 		// point1 is the middle, so interp 2 and 3 and find x which is == y
-		std::cout << "boop" << std::endl;
 		auto iotherLine = interp(glm::vec2(static_cast<int>(ipoint2.x), static_cast<int>(ipoint2.y)), glm::vec2(static_cast<int>(ipoint3.x), static_cast<int>(ipoint3.y)), std::max(std::abs(ipoint2.x - ipoint3.x)+1, std::abs(ipoint2.y-ipoint3.y))+1);
 		auto totherLine = interp(glm::vec2(static_cast<int>(tpoint2.x), static_cast<int>(tpoint2.y)), glm::vec2(static_cast<int>(tpoint3.x), static_cast<int>(tpoint3.y)), std::max(std::abs(ipoint2.x - ipoint3.x)+1, std::abs(ipoint2.y-ipoint3.y))+1);
 		for (auto ipoint: iotherLine) {
@@ -303,11 +309,9 @@ void drawTexturedTriangle(CanvasTriangle imageTriangle, std::vector<std::vector<
 		drawPartialTriangle(ipoint3, ipoint1, ipoint4, Colour(255,255,255), window);
 	} else if ((ipoint2.y < ipoint1.y && ipoint2.y > ipoint3.y) || (ipoint2.y > ipoint1.y && ipoint2.y < ipoint3.y)) {
 		//point2 is the middle point, so interp 1 and 3 and find x which is == y
-		std::cout << "boopa" << std::endl;
 
 		auto otherLine = interp(glm::vec2(static_cast<int>(ipoint1.x), static_cast<int>(ipoint1.y)), glm::vec2(static_cast<int>(ipoint3.x), static_cast<int>(ipoint3.y)), std::max(std::abs(ipoint1.x - ipoint3.x)+1, std::abs(ipoint1.y-ipoint3.y))+1);
 		auto totherLine = interp(glm::vec2(static_cast<int>(tpoint1.x), static_cast<int>(tpoint1.y)), glm::vec2(static_cast<int>(tpoint3.x), static_cast<int>(tpoint3.y)), std::max(std::abs(ipoint1.x - ipoint3.x)+1, std::abs(ipoint1.y-ipoint3.y))+1);
-		//to get the samples, i need to in
 		for (auto point: otherLine) {
 			if (ipoint2.y == (int) point.y) {
 				ipoint4 = CanvasPoint((int) point.x, (int) point.y);
@@ -354,21 +358,67 @@ void drawTexturedTriangle(CanvasTriangle imageTriangle, std::vector<std::vector<
 	}
 }
 
+// Returns a vector of ModelTriangles that represent the triangles in the OBJ file
+std::vector<ModelTriangle> parseOBJ(const std::string& filename) {
+	std::ifstream theOBJ(filename);
+	std::string line;
+	std::string vectorDelimiter = " ";
+	std::string faceDelimiter = "/";
+	std::vector<ModelTriangle> outVector;
+	std::vector<glm::vec3> vertices;
+	std::vector<glm::ivec3> faces;
+	Colour currentColour;
+	while(theOBJ.eof() == false) {
+		getline(theOBJ, line);
+		if(line[0] == 'u') {
+			line = line.substr(line.find(" ")+1,line.length());
+			if (line == "White") {
+				currentColour = Colour(255,255,255);
+			} else if (line == "Grey") {
+				currentColour = Colour(125,125,125);
+			} else if (line == "Cyan") {
+				currentColour = Colour(0,255,255);
+			} else if (line == "Green") {
+				currentColour = Colour(0,255,0);
+			} else if (line == "Magenta") {
+				currentColour = Colour(255,0,255);
+			} else if (line == "Yellow") {
+				currentColour = Colour(0,255,255);
+			} else if (line == "Red") {
+				currentColour = Colour(255,0,0);
+			} else if (line == "Blue") {
+				currentColour = Colour(0,0,255);
+			} else {
+				currentColour = Colour(0,0,0);
+			}
+		} else if (line[0] == 'v') {
+			line = line.substr(2, line.size());
+			// std::cout << line << std::endl;
+			auto v1 = line.substr(0, line.find(vectorDelimiter));
+			line = line.substr(line.find(vectorDelimiter) + 1, line.size());
+			auto v2 = line.substr(0, line.find(vectorDelimiter));
+			line = line.substr(line.find(vectorDelimiter) + 1, line.size());
+			auto v3 = line.substr(0, line.find(vectorDelimiter));
+			// std::cout << v1 << " one  " << v2 << " two  " << v3 << " three" <<std::endl;
+			vertices.push_back(glm::vec3(std::stof(v1), std::stof(v2), std::stof(v3)));
+		} else if (line[0] == 'f') {
+			line = line.substr(2, line.size());
+			// std::cout << line << std::endl;
+			auto v1 = line.substr(0, line.find(faceDelimiter));
+			line = line.substr(line.find(faceDelimiter) + 2, line.size());
+			auto v2 = line.substr(0, line.find(faceDelimiter));
+			line = line.substr(line.find(faceDelimiter) + 2, line.size());
+			auto v3 = line.substr(0, line.find(faceDelimiter));
+			// std::cout << v1 << " one  "<< v2 << " two  "  << v3 << " three" << std::endl;
+			outVector.emplace_back(vertices[std::stoi(v1)-1], vertices[std::stoi(v2)-1], vertices[std::stoi(v3)-1], currentColour);
 
-void draw(DrawingWindow &window) {
-	// TextureMap texture = TextureMap("/Users/samuelstephens/Year3/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/texture.ppm");
-	// CanvasTriangle triangle =
-	// 	{CanvasPoint(160,10),
-	// 	 CanvasPoint(300,230),
-	// 	 CanvasPoint(10,150)
-	// };
-	// TexturePoint tp1 = {195,5};
-	// TexturePoint tp2 = {395,380};
-	// TexturePoint tp3 = {65,330};
-	// drawTexturedTriangle(triangle, texture, tp1, tp2, tp3, window);
+		}
+	}
+	return outVector;
 }
 
-void handleEvent(SDL_Event event, DrawingWindow &window) {
+// Not relevant to the coursework
+void handleEvent(const SDL_Event &event, DrawingWindow &window) {
 	if (event.type == SDL_KEYDOWN) {
 		if (event.key.keysym.sym == SDLK_LEFT) std::cout << "LEFT" << std::endl;
 		else if (event.key.keysym.sym == SDLK_RIGHT) std::cout << "RIGHT" << std::endl;
@@ -391,111 +441,26 @@ void handleEvent(SDL_Event event, DrawingWindow &window) {
 	}
 }
 
-std::vector<ModelTriangle> readSingleObject(std::string inString) {
-	std::string stringDelimiter = "\n";
-	std::string line = inString.substr(0, inString.find(stringDelimiter));
-	std::string vectorDelimiter = " ";
-	std::string faceDelimiter = "/";
-	std::vector<ModelTriangle> outVector;
-	std::vector<glm::vec3> vertices;
-	std::vector<glm::ivec3> faces;
-	while(inString != "end") {
-		if (line[0] == 'v') {
-			line = line.substr(2, line.size());
-			std::cout << line << std::endl;
-			auto v1 = line.substr(0, line.find(vectorDelimiter));
-			line = line.substr(line.find(vectorDelimiter) + 1, line.size());
-			auto v2 = line.substr(0, line.find(vectorDelimiter));
-			line = line.substr(line.find(vectorDelimiter) + 1, line.size());
-			auto v3 = line.substr(0, line.find(vectorDelimiter));
-			std::cout << v1 << " one  " << v2 << " two  " << v3 << " three" <<std::endl;
-			vertices.push_back(glm::vec3(std::stof(v1), std::stof(v2), std::stof(v3)));
-		} else if (line[0] == 'f') {
-			line = line.substr(2, line.size());
-			std::cout << line << std::endl;
-			auto v1 = line.substr(0, line.find(faceDelimiter));
-			line = line.substr(line.find(faceDelimiter) + 2, line.size());
-			auto v2 = line.substr(0, line.find(faceDelimiter));
-			line = line.substr(line.find(faceDelimiter) + 2, line.size());
-			auto v3 = line.substr(0, line.find(faceDelimiter));
-			std::cout << v1 << " one  "<< v2 << " two  "  << v3 << " three" << std::endl;
-			faces.push_back(glm::vec3(std::stoi(v1), std::stoi(v2), std::stoi(v3)));
-		}
-	}
-	for (auto face : faces) {
-		auto one = face.x;
-		auto two = face.y;
-		auto three = face.z;
-		outVector.push_back(ModelTriangle(vertices[one-1], vertices[two-1], vertices[three-1], Colour(255, 255, 255)));
-	}
-	return outVector;
-}
-
-// std::vector<ModelTriangle> readOBJ (char *filename) {
-void readOBJ (char *filename) {
-	std::ifstream theOBJ(filename);
-	std::string all;
-	std::string thisLine;
-
-	std::getline(theOBJ, thisLine);
-	std::getline(theOBJ, thisLine);
-	while(!theOBJ.eof()) {
-		std::getline(theOBJ, thisLine);
-		all += thisLine + "\n";
-	}
-	std::string objDelimiter = "\n\n";
-	for (int i=0; i<1; i++) {
-		std::string singleObject = all.substr(0, all.find(objDelimiter));
-		all = all.substr(all.find(objDelimiter) + 1, all.length());
-		std::cout << singleObject << std::endl;
-	}
+void draw(DrawingWindow &window) {
 
 }
 
 int main(int argc, char *argv[]) {
-	// auto triangles = readOBJ("/Users/samuelstephens/Downloads/cornell-box.obj");
-	readOBJ("/Users/samuelstephens/Downloads/cornell-box.obj");
-	// for (auto each : triangles) {
-	// 	std::cout << each << std::endl;
-	// }
+	const auto texture = TextureMap("/Users/samuelstephens/Year3/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/texture.ppm");
+	const std::string filename = "/Users/samuelstephens/Downloads/cornell-box.obj";
+	const std::vector<ModelTriangle> modelTriangles = parseOBJ(filename);
+	for (const auto &each : modelTriangles) {
+		std::cout << each << std::endl;
+	}
+
+
+
+
 
 
 
 	DrawingWindow window = DrawingWindow(WIDTH, HEIGHT, false);
 	SDL_Event event;
-	/*
-	std::vector<float> result;
-	for(size_t i=0; i<result.size(); i++) std::cout << result[i] << " ";
-	auto v1 = glm::vec2(27, 30);
-	auto v2 = glm::vec2(13, 30);
-	auto v3 = glm::vec2(15, 50);
-	auto res1 = interpv2(v1, v2, std::abs(v1.y-v2.y)+1);
-	auto res2 = interpv2(v2, v3, std::abs(v1.y-v2.y)+1);
-	auto res3 = interpv2(v1, v2, std::abs(v1.y-v2.y)+1);
-	// for (glm::vec2 elem : res1) {
-	//	 std::cout << glm::to_string(elem) << std::endl;
-	// }
-	TextureMap texture = TextureMap("/Users/samuelstephens/Year3/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/texture.ppm");
-	auto texturePoints = loadTexture(texture);
-	// for (int y=0; y<texture.height; y++){
-	// 	for (int x=0; x<texture.width; x++) {
-	// 		window.setPixelColour(x, y, texturePoints[y][x].colour.asARGB());
-	// 	}
-	// }
-	CanvasTriangle iTriangle =
-		{CanvasPoint(100,50),
-		CanvasPoint(200, 100),
-		CanvasPoint(100, 150)
-	};
-	CanvasTriangle tTriangle =
-	{CanvasPoint(100,50),
-	CanvasPoint(200, 100),
-	CanvasPoint(100, 150)
-	};
-	//make an interp list of all the points along the otherline, then multiply the numberOfValues by (top.y-middle.y)/(top.y-bottom.y) to get the position in outlist that you want
-	drawTexturedTriangle(iTriangle, texturePoints, tTriangle, window);
-	std::cout << std::endl;
-	*/
 	while (true) {
 		// We MUST poll for events - otherwise the window will freeze !
 		if (window.pollForInputEvents(event)) handleEvent(event, window);
