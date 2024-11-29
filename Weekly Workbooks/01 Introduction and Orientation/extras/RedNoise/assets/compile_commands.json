@@ -1,0 +1,62 @@
+[
+{
+  "directory": "/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/assets",
+  "command": "/usr/bin/c++  -I/usr/include/SDL2 -I\"/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/libs/glm-0.9.7.2\" -I\"/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/libs\"  -fopenmp -fopenmp -Wall -Wextra -Wcast-align -Wfatal-errors -Werror=return-type -Wno-unused-parameter -Wno-unused-variable -Wno-ignored-attributes -std=gnu++14 -o CMakeFiles/Schungus.dir/libs/sdw/CanvasPoint.cpp.o -c \"/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/libs/sdw/CanvasPoint.cpp\"",
+  "file": "/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/libs/sdw/CanvasPoint.cpp"
+},
+{
+  "directory": "/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/assets",
+  "command": "/usr/bin/c++  -I/usr/include/SDL2 -I\"/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/libs/glm-0.9.7.2\" -I\"/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/libs\"  -fopenmp -fopenmp -Wall -Wextra -Wcast-align -Wfatal-errors -Werror=return-type -Wno-unused-parameter -Wno-unused-variable -Wno-ignored-attributes -std=gnu++14 -o CMakeFiles/Schungus.dir/libs/sdw/CanvasTriangle.cpp.o -c \"/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/libs/sdw/CanvasTriangle.cpp\"",
+  "file": "/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/libs/sdw/CanvasTriangle.cpp"
+},
+{
+  "directory": "/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/assets",
+  "command": "/usr/bin/c++  -I/usr/include/SDL2 -I\"/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/libs/glm-0.9.7.2\" -I\"/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/libs\"  -fopenmp -fopenmp -Wall -Wextra -Wcast-align -Wfatal-errors -Werror=return-type -Wno-unused-parameter -Wno-unused-variable -Wno-ignored-attributes -std=gnu++14 -o CMakeFiles/Schungus.dir/libs/sdw/Colour.cpp.o -c \"/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/libs/sdw/Colour.cpp\"",
+  "file": "/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/libs/sdw/Colour.cpp"
+},
+{
+  "directory": "/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/assets",
+  "command": "/usr/bin/c++  -I/usr/include/SDL2 -I\"/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/libs/glm-0.9.7.2\" -I\"/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/libs\"  -fopenmp -fopenmp -Wall -Wextra -Wcast-align -Wfatal-errors -Werror=return-type -Wno-unused-parameter -Wno-unused-variable -Wno-ignored-attributes -std=gnu++14 -o CMakeFiles/Schungus.dir/libs/sdw/DrawingWindow.cpp.o -c \"/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/libs/sdw/DrawingWindow.cpp\"",
+  "file": "/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/libs/sdw/DrawingWindow.cpp"
+},
+{
+  "directory": "/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/assets",
+  "command": "/usr/bin/c++  -I/usr/include/SDL2 -I\"/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/libs/glm-0.9.7.2\" -I\"/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/libs\"  -fopenmp -fopenmp -Wall -Wextra -Wcast-align -Wfatal-errors -Werror=return-type -Wno-unused-parameter -Wno-unused-variable -Wno-ignored-attributes -std=gnu++14 -o CMakeFiles/Schungus.dir/libs/sdw/ModelTriangle.cpp.o -c \"/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/libs/sdw/ModelTriangle.cpp\"",
+  "file": "/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/libs/sdw/ModelTriangle.cpp"
+},
+{
+  "directory": "/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/assets",
+  "command": "/usr/bin/c++  -I/usr/include/SDL2 -I\"/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/libs/glm-0.9.7.2\" -I\"/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/libs\"  -fopenmp -fopenmp -Wall -Wextra -Wcast-align -Wfatal-errors -Werror=return-type -Wno-unused-parameter -Wno-unused-variable -Wno-ignored-attributes -std=gnu++14 -o CMakeFiles/Schungus.dir/libs/sdw/RayTriangleIntersection.cpp.o -c \"/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/libs/sdw/RayTriangleIntersection.cpp\"",
+  "file": "/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/libs/sdw/RayTriangleIntersection.cpp"
+},
+{
+  "directory": "/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/assets",
+  "command": "/usr/bin/c++  -I/usr/include/SDL2 -I\"/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/libs/glm-0.9.7.2\" -I\"/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/libs\"  -fopenmp -fopenmp -Wall -Wextra -Wcast-align -Wfatal-errors -Werror=return-type -Wno-unused-parameter -Wno-unused-variable -Wno-ignored-attributes -std=gnu++14 -o CMakeFiles/Schungus.dir/libs/sdw/TextureMap.cpp.o -c \"/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/libs/sdw/TextureMap.cpp\"",
+  "file": "/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/libs/sdw/TextureMap.cpp"
+},
+{
+  "directory": "/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/assets",
+  "command": "/usr/bin/c++  -I/usr/include/SDL2 -I\"/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/libs/glm-0.9.7.2\" -I\"/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/libs\"  -fopenmp -fopenmp -Wall -Wextra -Wcast-align -Wfatal-errors -Werror=return-type -Wno-unused-parameter -Wno-unused-variable -Wno-ignored-attributes -std=gnu++14 -o CMakeFiles/Schungus.dir/libs/sdw/TexturePoint.cpp.o -c \"/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/libs/sdw/TexturePoint.cpp\"",
+  "file": "/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/libs/sdw/TexturePoint.cpp"
+},
+{
+  "directory": "/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/assets",
+  "command": "/usr/bin/c++  -I/usr/include/SDL2 -I\"/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/libs/glm-0.9.7.2\" -I\"/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/libs\"  -fopenmp -fopenmp -Wall -Wextra -Wcast-align -Wfatal-errors -Werror=return-type -Wno-unused-parameter -Wno-unused-variable -Wno-ignored-attributes -std=gnu++14 -o CMakeFiles/Schungus.dir/libs/sdw/Utils.cpp.o -c \"/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/libs/sdw/Utils.cpp\"",
+  "file": "/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/libs/sdw/Utils.cpp"
+},
+{
+  "directory": "/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/assets",
+  "command": "/usr/bin/c++  -I/usr/include/SDL2 -I\"/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/libs/glm-0.9.7.2\" -I\"/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/libs\"  -fopenmp -fopenmp -Wall -Wextra -Wcast-align -Wfatal-errors -Werror=return-type -Wno-unused-parameter -Wno-unused-variable -Wno-ignored-attributes -std=gnu++14 -o CMakeFiles/Schungus.dir/libs/boople/Camera.cpp.o -c \"/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/libs/boople/Camera.cpp\"",
+  "file": "/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/libs/boople/Camera.cpp"
+},
+{
+  "directory": "/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/assets",
+  "command": "/usr/bin/c++  -I/usr/include/SDL2 -I\"/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/libs/glm-0.9.7.2\" -I\"/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/libs\"  -fopenmp -fopenmp -Wall -Wextra -Wcast-align -Wfatal-errors -Werror=return-type -Wno-unused-parameter -Wno-unused-variable -Wno-ignored-attributes -std=gnu++14 -o CMakeFiles/Schungus.dir/src/Schungus.cpp.o -c \"/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/src/Schungus.cpp\"",
+  "file": "/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/src/Schungus.cpp"
+},
+{
+  "directory": "/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/assets",
+  "command": "/usr/bin/c++  -I/usr/include/SDL2 -I\"/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/libs/glm-0.9.7.2\" -I\"/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/libs\"  -fopenmp -fopenmp -Wall -Wextra -Wcast-align -Wfatal-errors -Werror=return-type -Wno-unused-parameter -Wno-unused-variable -Wno-ignored-attributes -std=gnu++14 -o CMakeFiles/Schungus.dir/libs/boople/Light.cpp.o -c \"/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/libs/boople/Light.cpp\"",
+  "file": "/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/libs/boople/Light.cpp"
+}
+]

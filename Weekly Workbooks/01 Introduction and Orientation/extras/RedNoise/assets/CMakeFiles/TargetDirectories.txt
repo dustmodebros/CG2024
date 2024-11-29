@@ -1,0 +1,4 @@
+/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/assets/CMakeFiles/Schungus.dir
+/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/assets/CMakeFiles/link_target.dir
+/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/assets/CMakeFiles/edit_cache.dir
+/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/assets/CMakeFiles/rebuild_cache.dir

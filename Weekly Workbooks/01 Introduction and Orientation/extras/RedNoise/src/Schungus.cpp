@@ -1,21 +1,31 @@
+#include <cstdio>
+#include <iostream>
+#include <ostream>
 #include <sdw/CanvasTriangle.h>
 #include <sdw/Colour.h>
 #include <sdw/DrawingWindow.h>
 #include <sdw/Utils.h>
 #include <fstream>
 #include <sdw/ModelTriangle.h>
-#include <random>
 #include <sdw/RayTriangleIntersection.h>
 #include <sdw/TextureMap.h>
-#include <valarray>
+#include <string>
+#include <utility>
 #include <vector>
 #include <glm/detail/type_vec.hpp>
 #include <glm/detail/type_vec3.hpp>
 #include <glm/ext.hpp>
 
+
+
 #include <boople/Camera.h>
 
+#include "SDL_keycode.h"
+#include "SDL_scancode.h"
 #include "boople/Light.h"
+#include "glm/detail/func_geometric.hpp"
+#include "glm/detail/type_mat.hpp"
+#include "sdw/TexturePoint.h"
 
 #define WIDTH 500
 #define HEIGHT 400
@@ -705,7 +715,7 @@ std::vector<std::vector<float>> *newDepthBuffer() {
 // Render the .obj file in the window
 void drawOBJ(Camera *camera, const float scalingFactor, std::vector<std::vector<float>> *depthBuffer, const std::vector<ModelTriangle>& triangles, DrawingWindow &window) {
 	CanvasTriangle renderTriangle;
-#pragma omp parallel for
+// #pragma omp parallel for
 	for (auto triangle: triangles) {
 		renderTriangle = {
 			projectVertexOntoCanvasPoint(camera, triangle.vertices[0], scalingFactor),
@@ -767,6 +777,22 @@ float calculateDiffuseLighting(std::pair<ModelTriangle, glm::vec3> res, Camera *
 	return result;
 }
 
+float calculateDiffuseReflectionLighting(std::pair<ModelTriangle, glm::vec3> res, glm::vec3 from, glm::vec3 point, Light light, const std::vector<ModelTriangle> &triangles) {
+	auto normal = res.first.normal;
+	if (dot(from - point, normal) < 0){
+		return 0;
+	}
+	float out = dot(normalize(light.position - res.second), normal);
+	if (length(point - res.second) > 0.01) {
+		if (length(point - res.second) < length(point - light.position)) {
+			out = 0.2;
+		}
+	}
+	float result = std::min(1.0f, out);
+	result = std::max(0.0f, result);
+	return result;
+}
+
 float calculateNormalDiffuseLighting(std::pair<ModelTriangle, glm::vec3> res, glm::vec3 point, glm::vec3 normal, Light light, const std::vector<ModelTriangle> &triangles) {
 	float out = dot(normalize(light.position - res.second), normal);
 	if (length(point - res.second) > 0.01) {
@@ -779,6 +805,7 @@ float calculateNormalDiffuseLighting(std::pair<ModelTriangle, glm::vec3> res, gl
 	return result;
 }
 
+
 float calculateSpecularLighting(std::pair<ModelTriangle, glm::vec3> res, Camera *camera, glm::vec3 point, Light light, int power, const std::vector<ModelTriangle> &triangles) {
 	auto normal = res.first.normal;
 	if (dot(camera->position - point, normal) < 0){
@@ -787,6 +814,24 @@ float calculateSpecularLighting(std::pair<ModelTriangle, glm::vec3> res, Camera 
 	glm::vec3 Ri = normalize(point - light.position);
 	glm::vec3 Rr = Ri - 2*res.first.normal*dot(Ri, res.first.normal);
 	float out = std::pow(dot(normalize(camera->position - point), Rr), std::pow(2, power));
+	if (length(point - res.second) > 0.01) {
+		if (length(point - res.second) < length(point - light.position)) {
+			out = 0;
+		}
+	}
+	float result = std::min(1.0f, out);
+	result = std::max(0.0f, result);
+	return result;
+}
+
+float calculateSpecularReflectionLighting(std::pair<ModelTriangle, glm::vec3> res, glm::vec3 from, glm::vec3 point, Light light, int power, const std::vector<ModelTriangle> &triangles) {
+	auto normal = res.first.normal;
+	if (dot(from - point, normal) < 0){
+		return 0;
+	}
+	glm::vec3 Ri = normalize(point - light.position);
+	glm::vec3 Rr = Ri - 2*res.first.normal*dot(Ri, res.first.normal);
+	float out = std::pow(dot(normalize(from - point), Rr), std::pow(2, power));
 	if (length(point - res.second) > 0.01) {
 		if (length(point - res.second) < length(point - light.position)) {
 			out = 0;
@@ -825,10 +870,21 @@ float calculateRaytracedLighting(Camera *camera, glm::vec3 point, const Light li
 	return final;
 }
 
-float calculateNormalRaytracedLighting(Camera *camera, glm::vec3 point, const glm::vec3 normal, const Light light, const std::vector<ModelTriangle> &triangles) {
+float calculateReflectionLighting(glm::vec3 from, glm::vec3 point, const Light light, const std::vector<ModelTriangle> &triangles) {
 	point = point + 0.001 * normalize(light.position - point)* glm::mat3(glm::vec3(1,0,0), glm::vec3(0,1,0), glm::vec3(0,0,-1));
 	std::pair<ModelTriangle, glm::vec3> res = getClosestIntersection(point, normalize(point - light.position), triangles);
 	float ambientWeight = 0.2;
+	float prox = calculateProximityLighting(res, point, light, triangles);
+	float diff = sqrt(calculateDiffuseReflectionLighting(res, from, point, light, triangles));
+	float comb = (1-ambientWeight)*(-(prox*diff)*(prox*diff) + 2 * prox*diff) + ambientWeight;
+	float final = 0.8 * comb + 0.2 * calculateSpecularReflectionLighting(res, from, point, light, 4, triangles);
+	return final;
+}
+
+float calculateNormalRaytracedLighting(Camera *camera, glm::vec3 point, const glm::vec3 normal, const Light light, const std::vector<ModelTriangle> &triangles) {
+	point = point + 0.001 * normalize(light.position - point)* glm::mat3(glm::vec3(1,0,0), glm::vec3(0,1,0), glm::vec3(0,0,-1));
+	std::pair<ModelTriangle, glm::vec3> res = getClosestIntersection(point, normalize(point - light.position), triangles);
+	float ambientWeight = 0.3;
 	float prox = calculateProximityLighting(res, point, light, triangles);
 	float diff = sqrt(calculateNormalDiffuseLighting(res, point, normal, light, triangles));
 	float comb = (1-ambientWeight)*(-(prox*diff)*(prox*diff) + 2 * prox*diff) + ambientWeight;
@@ -841,9 +897,16 @@ float calculateGouraudLighting(Camera *camera, glm::vec3 point, Light light, con
 	auto cipoint = point + 0.001 * normalize(light.position - point)* glm::mat3(glm::vec3(1,0,0), glm::vec3(0,1,0), glm::vec3(0,0,-1));
 	std::pair<ModelTriangle, glm::vec3> res = getClosestIntersection(cipoint, normalize(cipoint - light.position), triangles);
 	auto triangle = res.first;
-	float vb0 = calculateNormalRaytracedLighting(camera, triangle.vertices[0], calculateVertexNormal(triangle.vertices[0], triangles), light, triangles);
-	float vb1 = calculateNormalRaytracedLighting(camera, triangle.vertices[1], calculateVertexNormal(triangle.vertices[1], triangles), light, triangles);
-	float vb2 = calculateNormalRaytracedLighting(camera, triangle.vertices[2], calculateVertexNormal(triangle.vertices[2], triangles), light, triangles);
+	auto normal1 = calculateVertexNormal(triangle.vertices[0], triangles);
+	auto normal2 = calculateVertexNormal(triangle.vertices[1], triangles);
+	auto normal3 = calculateVertexNormal(triangle.vertices[2], triangles);
+	auto normal = glm::normalize(normal1 + normal2 + normal3);
+	if (dot(camera->position - point, normal) < 0) {
+		return 0;
+	}
+	float vb0 = calculateNormalRaytracedLighting(camera, triangle.vertices[0], normal1, light, triangles);
+	float vb1 = calculateNormalRaytracedLighting(camera, triangle.vertices[1], normal2, light, triangles);
+	float vb2 = calculateNormalRaytracedLighting(camera, triangle.vertices[2], normal3, light, triangles);
 	auto weights = baryFromVec3(point, triangle);
 	return vb0 * weights[0] + vb1 * weights[1] + vb2 * weights[2];
 }
@@ -865,6 +928,15 @@ Colour getTextureMappedColour(const std::vector<std::vector<TexturePoint>> &text
 	TexturePoint onTexture = texturePointFromBary(weights, textureCoords);
 	auto toPaint = texture[onTexture.y][onTexture.x];
 	return toPaint.colour;
+}
+
+Colour getReflectionColour(Camera *camera, std::vector<std::vector<TexturePoint>> texture, glm::vec3 point, Light *light, ModelTriangle triangle, std::vector<ModelTriangle> triangles){
+	glm::vec3 Ri = normalize(point - camera->position);
+	glm::vec3 Rr = normalize(Ri - 2*triangle.normal*dot(Ri, triangle.normal)) * glm::mat3(glm::vec3(1,0,0), glm::vec3(0,1,0), glm::vec3(0,0,-1));
+	point = point + 0.001 * normalize(light->position - point);
+	std::pair<ModelTriangle, glm::vec3> res = getClosestIntersection(point, Rr, triangles);
+	auto weighting = calculateReflectionLighting(point, res.second, *light, triangles);
+	return res.first.colour * weighting;
 }
 
 void drawRaytraceOBJ(Camera *camera, float scalingFactor, const std::vector<std::vector<TexturePoint>>& texture, const std::vector<ModelTriangle>& triangles, Light *light, DrawingWindow &window) {
@@ -892,6 +964,13 @@ void drawRaytraceOBJ(Camera *camera, float scalingFactor, const std::vector<std:
 				auto lighting = calculateRaytracedLighting(camera, toPaint.second, *light, triangles);
 				if (toPaint.first.colour == Colour(0,255,0)) {
 					window.setPixelColour(WIDTH/2-i, HEIGHT/2-j, (getTextureMappedColour(texture, toPaint.second, toPaint.first,toPaint.first.texturePoints) *lighting).asARGB());
+				} else {
+					window.setPixelColour(WIDTH/2-i, HEIGHT/2-j, (toPaint.first.colour * lighting).asARGB());
+				}
+			} else if (camera->mode == "RAYTRACE_R") {
+				auto lighting = calculateRaytracedLighting(camera, toPaint.second, *light, triangles);
+				if (toPaint.first.colour == Colour(255, 0,255)) {
+					window.setPixelColour(WIDTH/2-i, HEIGHT/2-j, (getReflectionColour(camera, texture, toPaint.second, light, toPaint.first, triangles) *lighting).asARGB());
 				} else {
 					window.setPixelColour(WIDTH/2-i, HEIGHT/2-j, (toPaint.first.colour * lighting).asARGB());
 				}
@@ -931,10 +1010,6 @@ void handleEvent(const SDL_Event &event, std::vector<std::vector<float>> *depthB
 			window.clearPixels();
 			clearDepthBuffer(depthBuffer);
 		}
-		else if (event.key.keysym.sym == SDLK_r) {
-			auto print = getClosestIntersection(camera->position,camera->orientation[2], parseOBJ(filename, 0.35));
-			std::cout << print.first << std::endl;
-		}
 		else if (event.key.keysym.sym == SDLK_o) {
 			// Print current orientation matrix
 			std::cout << camera->orientation[0][0] << ", " << camera->orientation[1][0] << ", " << camera->orientation[2][0] << std::endl;
@@ -972,17 +1047,19 @@ void handleEvent(const SDL_Event &event, std::vector<std::vector<float>> *depthB
 			std::cout << "boople" << std::endl;
 			camera->mode = "RAYTRACE_TM";
 		}
+		else if (event.key.keysym.sym == SDLK_9) {
+			//texture map
+			std::cout << "boople" << std::endl;
+			camera->mode = "RAYTRACE_R";
+		}
+		else if (event.key.keysym.sym == SDLK_r) {
+			//texture map
+			std::cout << "boople" << std::endl;
+			camera->mode = "RECORD";
+		}
 		else if (event.key.keysym.sym == SDLK_p) {
 			auto print = camera->position;
 			std::cout << print.x << ", " << print.y << ", " << print.z << std::endl;
-		}
-		else if (event.key.keysym.sym == SDLK_EQUALS) {
-			light->position += glm::vec3(0,0.1,0);
-			std::cout << light->position.x << ", "<< light->position.y << ", " << light->position.z << std::endl;
-		}
-		else if (event.key.keysym.sym == SDLK_MINUS) {
-			 light->position -= glm::vec3(0,0.1,0);
-			std::cout <<  light->position.x << ", "<< light->position.y << ", " <<  light->position.z << std::endl;
 		}
 	} else if (event.type == SDL_MOUSEBUTTONDOWN) {
 		window.savePPM("output.ppm");
@@ -1007,6 +1084,8 @@ void draw(std::vector<std::vector<float>> *depthBuffer, Camera *camera, std::vec
 		drawOBJ(camera, 160, depthBuffer, trianglesB, window);
 	} else if (camera->mode == "RAYTRACE_TM") {
 		drawRaytraceOBJ(camera, 0.35, texture, trianglesB, light, window);
+	} else if (camera->mode == "RAYTRACE_R") {
+		drawRaytraceOBJ(camera, 0.35, texture, trianglesB, light, window);
 	} else if (camera->mode == "SPHERE_G" || camera->mode == "SPHERE_P") {
 		drawRaytraceOBJ(camera, 0.35, texture, trianglesS, light, window);
 	} else if (camera->mode == "SPHERE_W") {
@@ -1019,12 +1098,22 @@ void draw(std::vector<std::vector<float>> *depthBuffer, Camera *camera, std::vec
 			projectVertexOntoCanvasPoint(camera, triangle.vertices[2], 160));
 			drawStrokedTriangle(zoop, triangle.colour, window);
 		}
+	} else if (camera->mode == "RECORD") {
+		for (int i=0; i<trianglesB.size(); i++) {
+			auto triangle = trianglesB[i];
+			clearDepthBuffer(depthBuffer);
+			CanvasTriangle zoop = CanvasTriangle(
+			projectVertexOntoCanvasPoint(camera, triangle.vertices[0], 160),
+			projectVertexOntoCanvasPoint(camera, triangle.vertices[1], 160),
+			projectVertexOntoCanvasPoint(camera, triangle.vertices[2], 160));
+			drawStrokedTriangle(zoop, triangle.colour, window);
+		}
 	} else {
 		drawRaytraceOBJ(camera, 0.35, texture, trianglesB, light, window);
 	}
 }
 
-void movement(std::vector<std::vector<float>> *depthBuffer, Camera *camera, DrawingWindow &window, const float deltaTime) {
+void movement(std::vector<std::vector<float>> *depthBuffer, Camera *camera, DrawingWindow &window, Light *light, const float deltaTime) {
 	const Uint8 *state = SDL_GetKeyboardState(NULL);
 	float speed = 0.5f;
 	if (state[SDL_SCANCODE_LEFT]) {
@@ -1083,6 +1172,87 @@ void movement(std::vector<std::vector<float>> *depthBuffer, Camera *camera, Draw
 		window.clearPixels();
 		clearDepthBuffer(depthBuffer);
 	}
+	if (state[SDL_SCANCODE_MINUS]) {
+		light->position -= (0.1f * deltaTime * glm::vec3{0,1,-0.1});
+	}
+	if (state[SDL_SCANCODE_EQUALS]) {
+		light->position += (0.1f * deltaTime * glm::vec3{0,1,-0.1});
+	}
+}
+
+void doPlayback(Camera *camera, std::vector<std::pair<glm::vec3, glm::mat3>> poss, std::vector<std::vector<float>> *depthBuffer,std::vector<ModelTriangle> trianglesB,std::vector<ModelTriangle> trianglesS, const std::vector<std::vector<TexturePoint>>& texture, Light *light, DrawingWindow window){
+	int id=0;
+	camera->mode = "SPHERE_P";
+	std::string filename;
+	for (auto elem : poss) {
+		camera->position = elem.first;
+		camera->orientation = elem.second;
+		draw(depthBuffer, camera, trianglesB, trianglesS, texture, light, window);
+		if (id < 10){
+			filename = "assets/bmps/b000" + std::to_string(id) + ".bmp";
+		}else if (id < 100){
+			filename = "assets/bmps/b00" + std::to_string(id) + ".bmp";
+		}else if (id < 1000){
+			filename = "assets/bmps/b0" + std::to_string(id) + ".bmp";
+		}else{
+			filename = "assets/bmps/b" + std::to_string(id) + ".bmp";
+		}
+		window.saveBMP(filename);
+		std::cout << "frame " << filename << std::endl;
+		id++;
+	}
+}
+
+std::vector<std::pair<glm::vec3, glm::mat3>> parseRecording(std::string filename){
+	std::ifstream myfile;
+	myfile.open("/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/assets/recording.txt",std::ios_base::in);
+	std::string line;
+	std::vector<std::pair<glm::vec3, glm::mat3>> out;
+	while(std::getline(myfile, line)){
+		std::string posLine;
+		std::string orLine1;
+		std::string orLine2;
+		std::string orLine3;
+		getline(myfile, posLine);
+		getline(myfile, orLine1);
+		getline(myfile, orLine2);
+		getline(myfile, orLine3);
+		posLine = posLine.substr(posLine.find(":")+2);
+		float posLine1 = std::stof(posLine.substr(0,posLine.find(",")));
+		posLine = posLine.substr(posLine.find(",")+2);
+		float posLine2 = std::stof(posLine.substr(0,posLine.find(",")));
+		posLine = posLine.substr(posLine.find(",")+2);
+		float posLine3 = std::stof(posLine);
+		glm::vec3 pos = {posLine1, posLine2, posLine3};
+
+		orLine1 = orLine1.substr(orLine1.find(":")+1);
+		float orLine11 = std::stof(orLine1.substr(0,orLine1.find(",")));
+		orLine1 = orLine1.substr(orLine1.find(",")+1);
+		float orLine12 = std::stof(orLine1.substr(0,orLine1.find(",")));
+		orLine1 = orLine1.substr(orLine1.find(",")+1);
+		float orLine13 = std::stof(orLine1);
+
+		orLine2 = orLine2.substr(orLine2.find(":")+1);
+		float orLine21 = std::stof(orLine2.substr(0,orLine2.find(",")));
+		orLine2 = orLine2.substr(orLine2.find(",")+1);
+		float orLine22 = std::stof(orLine2.substr(0,orLine2.find(",")));
+		orLine2 = orLine2.substr(orLine2.find(",")+1);
+		float orLine23 = std::stof(orLine2);
+
+		orLine3 = orLine3.substr(orLine3.find(":")+1);
+		float orLine31 = std::stof(orLine3.substr(0,orLine3.find(",")));
+		orLine3 = orLine3.substr(orLine3.find(",")+1);
+		float orLine32 = std::stof(orLine3.substr(0,orLine3.find(",")));
+		orLine3 = orLine3.substr(orLine3.find(",")+1);
+		float orLine33 = std::stof(orLine3);
+
+		glm::vec3 or1 = {orLine11, orLine21, orLine31};
+		glm::vec3 or2 = {orLine12, orLine22, orLine32};
+		glm::vec3 or3 = {orLine13, orLine23, orLine33};
+		auto orMat = glm::mat3(or1, or2, or3);
+		out.emplace_back(std::pair<glm::vec3, glm::mat3>(pos, orMat));
+	}
+	return out;
 }
 
 int main(int argc, char *argv[]) {
@@ -1097,19 +1267,47 @@ int main(int argc, char *argv[]) {
 	DrawingWindow window = DrawingWindow(WIDTH, HEIGHT, false);
 	Light light =  Light();
 	SDL_Event event;
+	bool playback = false;
 	// drawTexture(texture, window);
 	auto trianglesB = debugParseOBJ(filename, light, texture, 0.35);
 	auto trianglesS = debugParseOBJ(filename2, light, texture, 0.35);
 	float deltaTime = 0.0f;
+	std::vector<std::pair<glm::vec3, glm::mat3>> movements;
+	if (playback){
+		movements = parseRecording("assets/recording.txt");
+		std::cout << movements.size() << std::endl;
+	}
+	
 	Uint32 lastFrameTime = SDL_GetTicks();
 	while (true) {
 		Uint32 thisFrameTime = SDL_GetTicks();
-		deltaTime = (static_cast<float>(thisFrameTime - lastFrameTime))/1000;
+		if (camera->mode != "RECORD"){
+			deltaTime = (static_cast<float>(thisFrameTime - lastFrameTime))/1000;
+		} else {
+			deltaTime = 1.0/300;
+		}
 		// We MUST poll for events - otherwise the window will freeze !
 		if (window.pollForInputEvents(event)) handleEvent(event, depthBuffer, camera, filename, &light, window);
-		movement(depthBuffer, camera, window, deltaTime);
-		draw(depthBuffer, camera, trianglesB, trianglesS, texture, &light, window);
+		movement(depthBuffer, camera, window, &light, deltaTime);
+		if (!playback){
+			draw(depthBuffer, camera, trianglesB, trianglesS, texture, &light, window);
+		} else {
+			std::cout << "starting render" << std::endl;
+			doPlayback(camera, movements, depthBuffer, trianglesB, trianglesS, texture, &light, window);
+			std::cout << "done render" << std::endl;
+			exit(0);
+		}
 		// Need to render the frame at the end, or nothing actually gets shown on the screen !
+		if (camera->mode == "RECORD"){
+			std::ofstream myfile;
+			myfile.open("/home/dustmodebros/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/assets/recording.txt",std::ios_base::app);
+			myfile << "pos: " << camera->position.x << ", " << camera->position.y << ", " << camera->position.z << std::endl;
+			myfile << "orient1: " << camera->orientation[0].x << ", " << camera->orientation[1].x << ", " << camera->orientation[2].x << std::endl;
+			myfile << "orient2: " << camera->orientation[0].y << ", " << camera->orientation[1].y << ", " << camera->orientation[2].y << std::endl;
+			myfile << "orient3: " << camera->orientation[0].z << ", " << camera->orientation[1].z << ", " << camera->orientation[2].z << std::endl;
+			myfile << std::endl;
+			myfile.close();
+		}
 		window.renderFrame();
 		lastFrameTime = thisFrameTime;
 	}
