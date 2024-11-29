@@ -5,14 +5,14 @@
 # Where `Release` can be replaced with `Debug`, which contains gdb and address sanitiser definitions already written for you.
 # Once a build is created, proceed with *compilation*:
 # 
-#   cmake --build build --target RedNoise --config Release # optionally, for parallel build, append -j $(nproc)
+#   cmake --build build --target Schungus --config Release # optionally, for parallel build, append -j $(nproc)
 #
 # This creates the executable in the build directory. You only need to *generate* a build if you modify the CMakeList.txt file.
 # For any other changes to the source code, simply recompile.
 
 
 cmake_minimum_required(VERSION 3.12)
-project(RedNoise)
+project(Schungus)
 
 set(CMAKE_CXX_STANDARD 14)
 
@@ -23,9 +23,12 @@ set(GLM_INCLUDE_DIRS libs/glm-0.9.7.2)
 find_package(SDL2 REQUIRED)
 
 include_directories(${SDL2_INCLUDE_DIRS} ${GLM_INCLUDE_DIRS})
-include_directories(libs/sdw)
+include_directories(libs)
 
-add_executable(RedNoise
+FILE(GLOB SOURCES src/*.cpp)
+FILE(GLOB BSOURCES libs/boople/*.cpp)
+
+add_executable(Schungus
         libs/sdw/CanvasPoint.cpp
         libs/sdw/CanvasTriangle.cpp
         libs/sdw/Colour.cpp
@@ -35,10 +38,21 @@ add_executable(RedNoise
         libs/sdw/TextureMap.cpp
         libs/sdw/TexturePoint.cpp
         libs/sdw/Utils.cpp
-        src/RedNoise.cpp)
+        libs/boople/Camera.cpp
+        ${SOURCES}
+        ${BSOURCES}
+        libs/boople/Light.cpp
+)
+
+find_package(OpenMP)
+if (OPENMP_FOUND)
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+endif()
 
 if (MSVC)
-    target_compile_options(RedNoise
+    target_compile_options(Schungus
             PUBLIC
             /W3
             /Zc:wchar_t
@@ -49,7 +63,7 @@ if (MSVC)
         set(SDL2_LIBRARIES SDL2::SDL2 SDL2::SDL2main)
     endif()
 else ()
-    target_compile_options(RedNoise
+    target_compile_options(Schungus
         PUBLIC
         -Wall
         -Wextra
@@ -61,14 +75,14 @@ else ()
         -Wno-ignored-attributes)
 
     set(DEBUG_OPTIONS -O0 -fno-omit-frame-pointer -g)
-    set(RELEASE_OPTIONS -O3 -march=native -mtune=native)
-    target_link_libraries(RedNoise PUBLIC $<$<CONFIG:Debug>:-Wl>)
+    set(RELEASE_OPTIONS -Ofast -funsafe-math-optimizations -march=native -mtune=native )
+    target_link_libraries(Schungus PUBLIC $<$<CONFIG:Debug>:-Wl>)
 
 endif()
 
 
-target_compile_options(RedNoise PUBLIC "$<$<CONFIG:RelWithDebInfo>:${RELEASE_OPTIONS}>")
-target_compile_options(RedNoise PUBLIC "$<$<CONFIG:Release>:${RELEASE_OPTIONS}>")
-target_compile_options(RedNoise PUBLIC "$<$<CONFIG:Debug>:${DEBUG_OPTIONS}>")
+target_compile_options(Schungus PUBLIC "$<$<CONFIG:RelWithDebInfo>:${RELEASE_OPTIONS}>")
+target_compile_options(Schungus PUBLIC "$<$<CONFIG:Release>:${RELEASE_OPTIONS}>")
+target_compile_options(Schungus PUBLIC "$<$<CONFIG:Debug>:${DEBUG_OPTIONS}>")
  
-target_link_libraries(RedNoise PRIVATE ${SDL2_LIBRARIES})
+target_link_libraries(Schungus PRIVATE ${SDL2_LIBRARIES})

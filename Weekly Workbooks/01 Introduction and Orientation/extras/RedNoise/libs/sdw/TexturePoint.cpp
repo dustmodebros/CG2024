@@ -1,6 +1,6 @@
 #include "TexturePoint.h"
 
-#include <Colour.h>
+#include "Colour.h"
 
 TexturePoint::TexturePoint() = default;
 TexturePoint::TexturePoint(float xPos, float yPos) : x(xPos), y(yPos){}

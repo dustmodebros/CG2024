@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Colour.h>
+#include "Colour.h"
 #include <iostream>
 
 struct TexturePoint {
