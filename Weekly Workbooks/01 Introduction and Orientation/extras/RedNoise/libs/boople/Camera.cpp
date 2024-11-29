@@ -28,7 +28,7 @@ void Camera::panCamera(float theta) {
 
 void Camera::tiltCamera(float theta) {
     glm::mat3 matrix = glm::mat3(glm::vec3(1,0,0),glm::vec3(0,glm::cos(theta),glm::sin(theta)),glm::vec3(0, -glm::sin(theta), glm::cos(theta)));
-    orientation = matrix*orientation;
+    orientation = orientation * matrix;
 }
 
 void Camera::orbit(float speed) {

@@ -20,6 +20,8 @@ set(CMAKE_CXX_STANDARD 14)
 # normally you would use find_package(<package_name>) for libraries with actual objects
 set(GLM_INCLUDE_DIRS libs/glm-0.9.7.2)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS On)
+
 find_package(SDL2 REQUIRED)
 
 include_directories(${SDL2_INCLUDE_DIRS} ${GLM_INCLUDE_DIRS})
@@ -65,6 +67,7 @@ if (MSVC)
 else ()
     target_compile_options(Schungus
         PUBLIC
+        -fopenmp
         -Wall
         -Wextra
         -Wcast-align
@@ -76,7 +79,7 @@ else ()
 
     set(DEBUG_OPTIONS -O0 -fno-omit-frame-pointer -g)
     set(RELEASE_OPTIONS -Ofast -funsafe-math-optimizations -march=native -mtune=native )
-    target_link_libraries(Schungus PUBLIC $<$<CONFIG:Debug>:-Wl>)
+    target_link_libraries(Schungus PUBLIC $<$<CONFIG:Debug>:-W>)
 
 endif()
 
@@ -84,5 +87,8 @@ endif()
 target_compile_options(Schungus PUBLIC "$<$<CONFIG:RelWithDebInfo>:${RELEASE_OPTIONS}>")
 target_compile_options(Schungus PUBLIC "$<$<CONFIG:Release>:${RELEASE_OPTIONS}>")
 target_compile_options(Schungus PUBLIC "$<$<CONFIG:Debug>:${DEBUG_OPTIONS}>")
+
+ADD_CUSTOM_TARGET(link_target ALL
+                  COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_SOURCE_DIR}/assets ${CMAKE_BINARY_DIR}/assets)
  
 target_link_libraries(Schungus PRIVATE ${SDL2_LIBRARIES})

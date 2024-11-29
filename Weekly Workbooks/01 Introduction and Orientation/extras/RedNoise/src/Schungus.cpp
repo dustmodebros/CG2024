@@ -738,9 +738,7 @@ std::pair<ModelTriangle, glm::vec3> getClosestIntersection(glm::vec3 fromPoint, 
 	return std::pair<ModelTriangle, glm::vec3>(outTriangle, closestSoFar);
 }
 
-float calculateProximityLighting(glm::vec3 point, const Light light, const std::vector<ModelTriangle> &triangles) {
-	point += 0.001 * normalize(light.position - point);
-	std::pair<ModelTriangle, glm::vec3> res = getClosestIntersection(point, normalize(light.position - point) * glm::mat3(glm::vec3(1,0,0), glm::vec3(0,1,0), glm::vec3(0,0,-1)), triangles);
+float calculateProximityLighting(std::pair<ModelTriangle, glm::vec3> res, glm::vec3 point, const Light light, const std::vector<ModelTriangle> &triangles) {
 	float out = length(point - light.position) * length(point - light.position);
 	if (length(point - res.second) > 0.0000001) {
 		if (length(point - res.second) < length(point - light.position)) {
@@ -753,10 +751,11 @@ float calculateProximityLighting(glm::vec3 point, const Light light, const std::
 	return result;
 }
 
-float calculateDiffuseLighting(glm::vec3 point, Light light, const std::vector<ModelTriangle> &triangles) {
-	point += 0.001 * normalize(light.position - point)* glm::mat3(glm::vec3(1,0,0), glm::vec3(0,1,0), glm::vec3(0,0,-1));
-	std::pair<ModelTriangle, glm::vec3> res = getClosestIntersection(point, normalize(point - light.position), triangles);
+float calculateDiffuseLighting(std::pair<ModelTriangle, glm::vec3> res, Camera *camera, glm::vec3 point, Light light, const std::vector<ModelTriangle> &triangles) {
 	auto normal = res.first.normal;
+	if (dot(camera->position - point, normal) < 0){
+		return 0;
+	}
 	float out = dot(normalize(light.position - res.second), normal);
 	if (length(point - res.second) > 0.01) {
 		if (length(point - res.second) < length(point - light.position)) {
@@ -768,9 +767,7 @@ float calculateDiffuseLighting(glm::vec3 point, Light light, const std::vector<M
 	return result;
 }
 
-float calculateNormalDiffuseLighting(glm::vec3 point, glm::vec3 normal, Light light, const std::vector<ModelTriangle> &triangles) {
-	point += 0.001 * normalize(light.position - point)* glm::mat3(glm::vec3(1,0,0), glm::vec3(0,1,0), glm::vec3(0,0,-1));
-	std::pair<ModelTriangle, glm::vec3> res = getClosestIntersection(point, normalize(point - light.position), triangles);
+float calculateNormalDiffuseLighting(std::pair<ModelTriangle, glm::vec3> res, glm::vec3 point, glm::vec3 normal, Light light, const std::vector<ModelTriangle> &triangles) {
 	float out = dot(normalize(light.position - res.second), normal);
 	if (length(point - res.second) > 0.01) {
 		if (length(point - res.second) < length(point - light.position)) {
@@ -782,9 +779,11 @@ float calculateNormalDiffuseLighting(glm::vec3 point, glm::vec3 normal, Light li
 	return result;
 }
 
-float calculateSpecularLighting(Camera *camera, glm::vec3 point, Light light, int power, const std::vector<ModelTriangle> &triangles) {
-	point += 0.001 * normalize(light.position - point)* glm::mat3(glm::vec3(1,0,0), glm::vec3(0,1,0), glm::vec3(0,0,-1));
-	std::pair<ModelTriangle, glm::vec3> res = getClosestIntersection(point, normalize(point - light.position), triangles);
+float calculateSpecularLighting(std::pair<ModelTriangle, glm::vec3> res, Camera *camera, glm::vec3 point, Light light, int power, const std::vector<ModelTriangle> &triangles) {
+	auto normal = res.first.normal;
+	if (dot(camera->position - point, normal) < 0){
+		return 0;
+	}
 	glm::vec3 Ri = normalize(point - light.position);
 	glm::vec3 Rr = Ri - 2*res.first.normal*dot(Ri, res.first.normal);
 	float out = std::pow(dot(normalize(camera->position - point), Rr), std::pow(2, power));
@@ -798,11 +797,9 @@ float calculateSpecularLighting(Camera *camera, glm::vec3 point, Light light, in
 	return result;
 }
 
-float calculateNormalSpecularLighting(Camera *camera, glm::vec3 point, glm::vec3 normal, Light light, int power, const std::vector<ModelTriangle> &triangles) {
-	point += 0.001 * normalize(light.position - point)* glm::mat3(glm::vec3(1,0,0), glm::vec3(0,1,0), glm::vec3(0,0,-1));
-	std::pair<ModelTriangle, glm::vec3> res = getClosestIntersection(point, normalize(point - light.position), triangles);
+float calculateNormalSpecularLighting(std::pair<ModelTriangle, glm::vec3> res, Camera *camera, glm::vec3 point, glm::vec3 normal, Light light, int power, const std::vector<ModelTriangle> &triangles) {
 	glm::vec3 Ri = normalize(point - light.position);
-	if (dot(Ri, normal) > 0) {
+	if (dot(camera->position - point, normal) < 0) {
 		return 0;
 	}
 	glm::vec3 Rr = Ri - 2*normal*dot(Ri, normal);
@@ -817,21 +814,25 @@ float calculateNormalSpecularLighting(Camera *camera, glm::vec3 point, glm::vec3
 	return result;
 }
 
-float calculateRaytracedLighting(Camera *camera, const glm::vec3 point, const Light light, const std::vector<ModelTriangle> &triangles) {
+float calculateRaytracedLighting(Camera *camera, glm::vec3 point, const Light light, const std::vector<ModelTriangle> &triangles) {
+	point = point + 0.001 * normalize(light.position - point)* glm::mat3(glm::vec3(1,0,0), glm::vec3(0,1,0), glm::vec3(0,0,-1));
+	std::pair<ModelTriangle, glm::vec3> res = getClosestIntersection(point, normalize(point - light.position), triangles);
 	float ambientWeight = 0.2;
-	float prox = calculateProximityLighting(point, light, triangles);
-	float diff = sqrt(calculateDiffuseLighting(point, light, triangles));
+	float prox = calculateProximityLighting(res, point, light, triangles);
+	float diff = sqrt(calculateDiffuseLighting(res, camera, point, light, triangles));
 	float comb = (1-ambientWeight)*(-(prox*diff)*(prox*diff) + 2 * prox*diff) + ambientWeight;
-	float final = 0.8 * comb + 0.2 * calculateSpecularLighting(camera, point, light, 4, triangles);
+	float final = 0.8 * comb + 0.2 * calculateSpecularLighting(res, camera, point, light, 4, triangles);
 	return final;
 }
 
-float calculateNormalRaytracedLighting(Camera *camera, const glm::vec3 point, const glm::vec3 normal, const Light light, const std::vector<ModelTriangle> &triangles) {
+float calculateNormalRaytracedLighting(Camera *camera, glm::vec3 point, const glm::vec3 normal, const Light light, const std::vector<ModelTriangle> &triangles) {
+	point = point + 0.001 * normalize(light.position - point)* glm::mat3(glm::vec3(1,0,0), glm::vec3(0,1,0), glm::vec3(0,0,-1));
+	std::pair<ModelTriangle, glm::vec3> res = getClosestIntersection(point, normalize(point - light.position), triangles);
 	float ambientWeight = 0.2;
-	float prox = calculateProximityLighting(point, light, triangles);
-	float diff = sqrt(calculateNormalDiffuseLighting(point, normal, light, triangles));
+	float prox = calculateProximityLighting(res, point, light, triangles);
+	float diff = sqrt(calculateNormalDiffuseLighting(res, point, normal, light, triangles));
 	float comb = (1-ambientWeight)*(-(prox*diff)*(prox*diff) + 2 * prox*diff) + ambientWeight;
-	float final = 0.8 * comb + 0.2 * calculateNormalSpecularLighting(camera, point, normal, light, 4, triangles);
+	float final = 0.8 * comb + 0.2 * calculateNormalSpecularLighting(res, camera, point, normal, light, 4, triangles);
 	// float comb = calculateNormalSpecularLighting(camera, point,normal, light, 4, triangles);
 	return final;
 }
@@ -874,7 +875,10 @@ void drawRaytraceOBJ(Camera *camera, float scalingFactor, const std::vector<std:
 			glm::vec3 pixel = camera->position + camera->orientation[0] * step * i - camera->orientation[1] * step * j + camera->focalLength * - camera->orientation[2];
 			std::pair<ModelTriangle, glm::vec3> toPaint = getClosestIntersection(camera->position, normalize(camera->position - pixel), triangles);
 			if (camera->mode == "RAYTRACE_P") { // this is inefficient
-				window.setPixelColour(WIDTH/2-i, HEIGHT/2-j, (toPaint.first.colour * calculateProximityLighting(toPaint.second, *light, triangles)).asARGB());
+				glm::vec3 point = toPaint.second;
+				point = point + 0.001 * normalize(light->position - point)* glm::mat3(glm::vec3(1,0,0), glm::vec3(0,1,0), glm::vec3(0,0,-1));
+				std::pair<ModelTriangle, glm::vec3> res = getClosestIntersection(point, normalize(point - light->position), triangles);
+				window.setPixelColour(WIDTH/2-i, HEIGHT/2-j, (toPaint.first.colour * calculateProximityLighting(res, point, *light, triangles)).asARGB());
 			} else if (camera->mode == "RAYTRACE_D") {
 				auto lighting = calculateRaytracedLighting(camera, toPaint.second, *light, triangles);
 				window.setPixelColour(WIDTH/2-i, HEIGHT/2-j, (toPaint.first.colour * lighting).asARGB());
@@ -971,11 +975,6 @@ void handleEvent(const SDL_Event &event, std::vector<std::vector<float>> *depthB
 		else if (event.key.keysym.sym == SDLK_p) {
 			auto print = camera->position;
 			std::cout << print.x << ", " << print.y << ", " << print.z << std::endl;
-		}
-		else if (event.key.keysym.sym == SDLK_l) {
-			// auto print = getClosestIntersection(camera->position,camera->orientation[2], parseOBJ(filename, 0.35));
-			camera->lookAt(light->position);
-			std::cout << calculateDiffuseLighting(camera->position, *light, parseOBJ(filename, 0.35)) << std::endl;
 		}
 		else if (event.key.keysym.sym == SDLK_EQUALS) {
 			light->position += glm::vec3(0,0.1,0);
@@ -1087,11 +1086,11 @@ void movement(std::vector<std::vector<float>> *depthBuffer, Camera *camera, Draw
 }
 
 int main(int argc, char *argv[]) {
-	const auto texture_map = TextureMap("/Users/samuelstephens/Year3/CG2024/Weekly Workbooks/01 Introduction and Orientation/extras/RedNoise/texture.ppm");
-	const std::string filename = "/Users/samuelstephens/Downloads/cornell-box.obj";
-	const std::string filename2 = "/Users/samuelstephens/Downloads/sphere.obj";
+	const auto texture_map = TextureMap("assets/texture.ppm");
+	const std::string filename = "assets/cornell-box.obj";
+	const std::string filename2 = "assets/sphere.obj";
 	auto texture = loadTexture(texture_map);
-	// const std::string filename = "/Users/samuelstephens/Downloads/cornell-box copy.obj";
+	// const std::string filename = "assets/cornell-box copy.obj";
 	auto depthBuffer = newDepthBuffer();
 	Camera c = Camera(glm::vec3(0,0,4), glm::mat3(glm::vec3(1,0,0),glm::vec3(0,1,0),glm::vec3(0,0,1)), 2);
 	Camera *camera = &c;
