@@ -10,7 +10,7 @@
 # This creates the executable in the build directory. You only need to *generate* a build if you modify the CMakeList.txt file.
 # For any other changes to the source code, simply recompile.
 
-
+#
 cmake_minimum_required(VERSION 3.12)
 project(Schungus)
 
